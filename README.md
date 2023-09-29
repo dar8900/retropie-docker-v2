@@ -21,13 +21,26 @@ Take a look at the `cmd.sh` file from this repo, and change the directories to o
 
 These are pretty much the places you need to keep on your home directory after kill out your container.
 
+Add a `runner_conf.conf` file with these variables filled with your own dirs:
+
+``` bash
+ROMS_DIR=
+BIOS_DIR=
+CONFIG_DIR=
+RETROARCH_AUTOCONF=
+EMU_CONF=
+```
+
 To run:
 
-    $ chmod +x cmd.sh
-    $ ./cmd.sh
+ ```bash
+ chmod +x run_emulation.sh
+./run_emulation.sh
 
-If you have first started EmulationStation, it will clean-up all controller config data as per `entrypoint.sh`. After that, EmulationStation will be launched. `cmd.sh` script will also set the permissions for the docker process to access X with the `xhost` utility.
+ ```
+
+If you have first started EmulationStation, it will clean-up all controller config data as per `entrypoint.sh`. After that, EmulationStation will be launched. `run_emulation.sh` script will also set the permissions for the docker process to access X with the `xhost` utility.
 
 # Currently known issues
 
-So far, you'll have to map your local paths inside `cmd.sh` while we develop something like a config file.
+Better improvement of the config file
