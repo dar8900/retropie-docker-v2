@@ -15,52 +15,51 @@ print_message() {
     echo -e "${MSG_COLOR}$MESSAGE${NO_COLOR}"
 }
 
+usage()
+{
+	print_message "Usage: $0 <conf file> <docker image>" info
+}
 
-CONF_FILE="runner_conf.conf"
+
+CONF_FILE=$1
+DOCKER_IMG=$2
 
 if [ ! -f "$CONF_FILE" ];then
 	print_message "Config file missing" error
+	usage
+	exit 1
+fi
+
+check_docker_image=$(docker image inspect "$DOCKER_IMG" 1>/dev/null 2>&1)
+
+RET=$?
+
+if [ -z "$DOCKER_IMG" ] || [ "$RET" -ne 0 ];then
+	print_message "Docker image name missing or wrong" error
+	usage
 	exit 1
 fi
 
 source "$CONF_FILE"
 
+variables=("ROMS_DIR" "BIOS_DIR" "CONFIG_DIR" "RETROARCH_AUTOCONF" "EMU_CONF")
 
-if [ -z "$ROMS_DIR" ];then
-    print_message "ROMS_DIR parameter missing" error
-    exit 1
-elif [ ! -d "$ROMS_DIR" ];then
-	mkdir -p "$ROMS_DIR"
-fi
 
-if [ -z "$BIOS_DIR" ];then
-    print_message "BIOS_DIR parameter missing" error
-    exit 1
-elif [ ! -d "$BIOS_DIR" ];then
-	mkdir -p "$BIOS_DIR"
-fi
+verifica_o_crea_directory() {
+    var_name="$1"
+    dir_path="${!var_name}"
 
-if [ -z "$CONFIG_DIR" ];then
-    print_message "CONFIG_DIR parameter missing" error
-    exit 1
-elif [ ! -d "$CONFIG_DIR" ];then
-	mkdir -p "$CONFIG_DIR"
-fi
+    if [ -z "$dir_path" ]; then
+        print_message "$var_name parameter missing" error
+        exit 1
+    elif [ ! -d "$dir_path" ]; then
+        mkdir -p "$dir_path"
+    fi
+}
 
-if [ -z "$RETROARCH_AUTOCONF" ];then
-    print_message "RETROARCH_AUTOCONF parameter missing" error
-    exit 1
-elif [ ! -d "$RETROARCH_AUTOCONF" ];then
-	mkdir -p "$RETROARCH_AUTOCONF"
-fi
-
-if [ -z "$EMU_CONF" ];then
-    print_message "EMU_CONF parameter missing" error
-    exit 1
-elif [ ! -d "$EMU_CONF" ];then
-	mkdir -p "$EMU_CONF"
-fi
-
+for var in "${variables[@]}"; do
+    verifica_o_crea_directory "$var"
+done
 
 xhost local:docker
 docker run -it --rm -e XDG_RUNTIME_DIR  -e DBUS_SESSION_BUS_ADDRESS \
@@ -77,4 +76,4 @@ docker run -it --rm -e XDG_RUNTIME_DIR  -e DBUS_SESSION_BUS_ADDRESS \
 	-v /run/udev:/run/udev -v /var/run/docker.sock:/var/run/docker.sock \
 	--device /dev/bus --device /dev/input --device /dev/uinput \
 	--device /dev/event --device /dev/snd \
-	--privileged retropie-docker
+	--privileged "$DOCKER_IMG"
